@@ -541,13 +541,17 @@ export function fetch(input, init) {
 
     xhr.onload = function() {
       var options = {
-        statusText: xhr.statusText,
+        statusText: xhr.status === 1223 ? 'No Content' : xhr.statusText,
         headers: parseHeaders(xhr.getAllResponseHeaders() || '')
       }
       // This check if specifically for when a user fetches a file locally from the file system
       // Only if the status is out of a normal range
       if (request.url.indexOf('file://') === 0 && (xhr.status < 200 || xhr.status > 599)) {
         options.status = 200;
+      } else if (xhr.status === 1223) {
+        // Normalize IE response to HTTP 204 when Win error 1223 under IE9
+        // REF: https://stackoverflow.com/a/10047236/5698182
+        options.status = 204;
       } else {
         options.status = xhr.status;
       }
