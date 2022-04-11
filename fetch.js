@@ -540,6 +540,12 @@ export function fetch(input, init) {
     }
 
     xhr.onload = function() {
+      // Handle IE response when Win error 12152 under IE9
+      // REF: https://stackoverflow.com/a/3731804/5698182
+      if (xhr.status === 12152) {
+        return rejectWith();
+      }
+
       var options = {
         statusText: xhr.status === 1223 ? 'No Content' : xhr.statusText,
         headers: parseHeaders(xhr.getAllResponseHeaders() || '')
@@ -563,20 +569,20 @@ export function fetch(input, init) {
     }
 
     xhr.onerror = function() {
-      setTimeout(function() {
-        reject(new TypeError('Network request failed'))
-      }, 0)
+      rejectWith()
     }
 
     xhr.ontimeout = function() {
-      setTimeout(function() {
-        reject(new TypeError('Network request timed out'))
-      }, 0)
+      rejectWith()
     }
 
     xhr.onabort = function() {
+      rejectWith(new DOMException('Aborted', 'AbortError'))
+    }
+
+    function rejectWith(error) {
       setTimeout(function() {
-        reject(new DOMException('Aborted', 'AbortError'))
+        reject(error || new TypeError('Network request timed out'))
       }, 0)
     }
 
